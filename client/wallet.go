@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 	"time"
@@ -9,9 +10,9 @@ import (
 )
 
 type Wallet interface {
-	Withdrawal(request *types.WithdrawalRequest) (*types.WithdrawalResponseData, error)
-	WithdrawalDetail(orderViewId string) (*types.Transaction, error)
-	Exchange(request *types.ExchangeRequest) (*types.ExchangeResponseData, error)
+	Withdrawal(ctx context.Context, request *types.WithdrawalRequest) (*types.WithdrawalResponseData, error)
+	WithdrawalDetail(ctx context.Context, orderViewId string) (*types.Transaction, error)
+	Exchange(ctx context.Context, request *types.ExchangeRequest) (*types.ExchangeResponseData, error)
 }
 
 // Withdrawal This method enables the withdrawal of funds from the specified wallet to an external address
@@ -25,11 +26,11 @@ type Wallet interface {
 // and Get Withdrawal Detail (v2) together with Withdrawal (v2).
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471332
-func (c *client) Withdrawal(request *types.WithdrawalRequest) (*types.WithdrawalResponseData, error) {
+func (c *client) Withdrawal(ctx context.Context, request *types.WithdrawalRequest) (*types.WithdrawalResponseData, error) {
 	request.RequestID = c.RequestID.Generate()
 	request.Timestamp = time.Now().UnixMilli()
 
-	ret, err := c.Post(PathWithdrawal, request)
+	ret, err := c.Post(ctx, PathWithdrawal, request)
 	if err != nil {
 		return nil, NewRequestError(
 			PathWithdrawal,
@@ -55,14 +56,14 @@ func (c *client) Withdrawal(request *types.WithdrawalRequest) (*types.Withdrawal
 // Amount field will be included fee if the fee paid in same coin symbol.
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471329
-func (c *client) WithdrawalDetail(orderViewId string) (*types.Transaction, error) {
+func (c *client) WithdrawalDetail(ctx context.Context, orderViewId string) (*types.Transaction, error) {
 	request := types.WithdrawalDetailRequest{
 		OrderViewID: orderViewId,
 		RequestID:   strconv.FormatInt(c.RequestID.Generate(), 10),
 		Timestamp:   time.Now().UnixMilli(),
 	}
 
-	ret, err := c.Get(PathWithdrawalDetail, request)
+	ret, err := c.Get(ctx, PathWithdrawalDetail, request)
 	if err != nil {
 		return nil, NewRequestError(
 			PathWithdrawalDetail,
@@ -89,11 +90,11 @@ func (c *client) WithdrawalDetail(orderViewId string) (*types.Transaction, error
 // Notes: Currently support from Ceffu to Exchange direction only.
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471337
-func (c *client) Exchange(request *types.ExchangeRequest) (*types.ExchangeResponseData, error) {
+func (c *client) Exchange(ctx context.Context, request *types.ExchangeRequest) (*types.ExchangeResponseData, error) {
 	request.RequestID = c.RequestID.Generate()
 	request.Timestamp = time.Now().UnixMilli()
 
-	ret, err := c.Post(PathExchange, request)
+	ret, err := c.Post(ctx, PathExchange, request)
 	if err != nil {
 		return nil, NewRequestError(
 			PathExchange,

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -8,17 +9,17 @@ import (
 )
 
 type SubWallet interface {
-	CreateSubWallet(parentWalletID, walletName string, autoCollection bool) (walletId int64, walletType uint32, err error)
-	GetDepositAddress(network, symbol string, walletID int64) (string, error)
-	GetDepositHistory(walletID int64, symbol, network string, startTime, endTime int64, pageNo, pageLimit int64) ([]*types.Transaction, error)
-	Transfer(symbol string, amount float64, fromWalletID, toWalletID int64) (*types.Transfer, error)
+	CreateSubWallet(ctx context.Context, parentWalletID, walletName string, autoCollection bool) (walletId int64, walletType uint32, err error)
+	GetDepositAddress(ctx context.Context, network, symbol string, walletID int64) (string, error)
+	GetDepositHistory(ctx context.Context, walletID int64, symbol, network string, startTime, endTime int64, pageNo, pageLimit int64) ([]*types.Transaction, error)
+	Transfer(ctx context.Context, symbol string, amount float64, fromWalletID, toWalletID int64) (*types.Transfer, error)
 }
 
 // CreateSubWallet This method allows to create Sub Wallet of the requested
 // Parent wallet ID (Only Applicable to Parent Wallet (Prime)).
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471342
-func (c *client) CreateSubWallet(parentWalletID, walletName string, autoCollection bool) (walletId int64, walletType uint32, err error) {
+func (c *client) CreateSubWallet(ctx context.Context, parentWalletID, walletName string, autoCollection bool) (walletId int64, walletType uint32, err error) {
 	request := types.CreatSubWalletRequest{
 		ParentWalletID: parentWalletID,
 		WalletName:     walletName,
@@ -27,7 +28,7 @@ func (c *client) CreateSubWallet(parentWalletID, walletName string, autoCollecti
 		Timestamp:      time.Now().UnixMilli(),
 	}
 
-	ret, err := c.Post(PathCreateSubWallet, request)
+	ret, err := c.Post(ctx, PathCreateSubWallet, request)
 	if err != nil {
 		return 0, 0, NewRequestError(
 			PathCreateSubWallet,
@@ -52,7 +53,7 @@ func (c *client) CreateSubWallet(parentWalletID, walletName string, autoCollecti
 // The walletId can be parentWalletId or subWalletId.
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471326
-func (c *client) GetDepositAddress(network, symbol string, walletID int64) (string, error) {
+func (c *client) GetDepositAddress(ctx context.Context, network, symbol string, walletID int64) (string, error) {
 	request := types.GetDepositAddressRequest{
 		CoinSymbol: symbol,
 		Network:    network,
@@ -60,7 +61,7 @@ func (c *client) GetDepositAddress(network, symbol string, walletID int64) (stri
 		WalletID:   walletID,
 	}
 
-	ret, err := c.Get(PathGetDepositAddress, request)
+	ret, err := c.Get(ctx, PathGetDepositAddress, request)
 	if err != nil {
 		return "", NewRequestError(
 			PathGetDepositAddress,
@@ -90,7 +91,7 @@ func (c *client) GetDepositAddress(network, symbol string, walletID int64) (stri
 // Please notice the default startTime and endTime to make sure that time interval is within 0-30 days.
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471585
-func (c *client) GetDepositHistory(walletID int64, symbol, network string, startTime, endTime int64, pageNo, pageLimit int64) ([]*types.Transaction, error) {
+func (c *client) GetDepositHistory(ctx context.Context, walletID int64, symbol, network string, startTime, endTime int64, pageNo, pageLimit int64) ([]*types.Transaction, error) {
 	request := types.GetDepositHistoryRequest{
 		WalletID:   walletID,
 		CoinSymbol: symbol,
@@ -102,7 +103,7 @@ func (c *client) GetDepositHistory(walletID int64, symbol, network string, start
 		Timestamp:  time.Now().UnixMilli(),
 	}
 
-	ret, err := c.Get(PathDepositHistory, request)
+	ret, err := c.Get(ctx, PathDepositHistory, request)
 	if err != nil {
 		return nil, NewRequestError(
 			PathDepositHistory,
@@ -128,7 +129,7 @@ func (c *client) GetDepositHistory(walletID int64, symbol, network string, start
 // Only applicable to Prime wallet structure.
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471348
-func (c *client) Transfer(symbol string, amount float64, fromWalletID, toWalletID int64) (*types.Transfer, error) {
+func (c *client) Transfer(ctx context.Context, symbol string, amount float64, fromWalletID, toWalletID int64) (*types.Transfer, error) {
 	timestamp := time.Now().UnixMilli()
 	request := types.TransferRequest{
 		CoinSymbol:   symbol,
@@ -139,7 +140,7 @@ func (c *client) Transfer(symbol string, amount float64, fromWalletID, toWalletI
 		Timestamp:    timestamp,
 	}
 
-	ret, err := c.Post(PathTransfer, request)
+	ret, err := c.Post(ctx, PathTransfer, request)
 	if err != nil {
 		return nil, NewRequestError(
 			PathTransfer,

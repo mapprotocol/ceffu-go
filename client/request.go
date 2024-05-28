@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,11 +17,8 @@ import (
 
 const defaultHTTPTimeout = 20 * time.Second
 
-func (c *client) request(path, method string, headers http.Header, body io.Reader) ([]byte, error) {
-	//cli := http.Client{
-	//	Timeout: defaultHTTPTimeout,
-	//}
-	request, err := http.NewRequest(method, path, body)
+func (c *client) request(ctx context.Context, path, method string, headers http.Header, body io.Reader) ([]byte, error) {
+	request, err := http.NewRequestWithContext(ctx, method, path, body)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +59,7 @@ func (c *client) request(path, method string, headers http.Header, body io.Reade
 	return data, nil
 }
 
-func (c *client) Get(path string, params interface{}) ([]byte, error) {
+func (c *client) Get(ctx context.Context, path string, params interface{}) ([]byte, error) {
 	encoded, err := URLEncode(params)
 	if err != nil {
 		return nil, err
@@ -76,10 +74,10 @@ func (c *client) Get(path string, params interface{}) ([]byte, error) {
 		"open-apikey":  []string{c.apiKey},
 		"signature":    []string{signature},
 	}
-	return c.request(fmt.Sprintf("%s%s", c.domain, path), http.MethodGet, headers, nil)
+	return c.request(ctx, fmt.Sprintf("%s%s", c.domain, path), http.MethodGet, headers, nil)
 }
 
-func (c *client) Post(path string, body interface{}) ([]byte, error) {
+func (c *client) Post(ctx context.Context, path string, body interface{}) ([]byte, error) {
 	data, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -91,7 +89,7 @@ func (c *client) Post(path string, body interface{}) ([]byte, error) {
 		"open-apikey":  []string{c.apiKey},
 		"signature":    []string{signature},
 	}
-	return c.request(fmt.Sprintf("%s%s", c.domain, path), http.MethodPost, headers, bytes.NewReader(data))
+	return c.request(ctx, fmt.Sprintf("%s%s", c.domain, path), http.MethodPost, headers, bytes.NewReader(data))
 }
 
 func URLEncode(s interface{}) (string, error) {
