@@ -19,7 +19,7 @@ type WithdrawalDetailRequest struct {
 	Timestamp   int64  `json:"timestamp"`             // Current Timestamp in millisecond
 }
 
-type ExchangeRequest struct {
+type TransferWithExchangeRequest struct {
 	Amount         string `json:"amount"`               // Transfer Amount
 	CoinSymbol     string `json:"coinSymbol,omitempty"` // Coin symbol
 	Direction      int64  `json:"direction,omitempty"`  // Transfer direction,; 10: custody->exchange; 20: exchange->custody
@@ -29,6 +29,13 @@ type ExchangeRequest struct {
 	Status         int64  `json:"status,omitempty"`     // Status
 	RequestID      int64  `json:"requestId"`            // Unique Identifier
 	Timestamp      int64  `json:"timestamp"`            // Current Timestamp in millisecond
+}
+
+type TransferDetailWithExchangeRequest struct {
+	OrderViewID string `json:"orderViewId,omitempty"` // Transfer transaction ID
+	RequestID   string `json:"requestId,omitempty"`   // Client request identifier: Universal Unique identifier provided by the client side.
+	Timestamp   int64  `json:"timestamp"`             // Current timestamp in millisecond
+	WalletID    int64  `json:"walletId"`              // Wallet ID
 }
 
 // response struct
@@ -81,14 +88,27 @@ type Transaction struct {
 	RequestID    *string `json:"requestId"` // universal unique identifier provided by the client side.
 }
 
-type ExchangeResponseData struct {
-	OrderViewId string      `json:"orderViewId"`
-	Status      int         `json:"status"`
-	Direction   interface{} `json:"direction"`
+type TransferWithExchangeResponse struct {
+	Data    *Transfer `json:"data"`
+	Code    string    `json:"code"`
+	Message string    `json:"message"`
 }
 
-type ExchangeResponse struct {
-	Data    *ExchangeResponseData `json:"data"`
-	Code    string                `json:"code"`
-	Message string                `json:"message"`
+type TransferDetail struct {
+	Amount         string `json:"amount"`
+	CoinSymbol     string `json:"coinSymbol"`
+	Direction      int    `json:"direction"`
+	ExchangeCode   int    `json:"exchangeCode"`
+	ExchangeUserID string `json:"exchangeUserId"`
+	OrderViewID    string `json:"orderViewId"`
+	Status         int    `json:"status"`
+	WalletID       int64  `json:"walletId"`
+	CreateTime     int64  `json:"createTime"` // TODO field is exist in response, need to check
+	RequestId      string `json:"requestId"`  // TODO field is exist in response, need to check
+}
+
+type TransferDetailWithExchangeResponse struct {
+	Data    *TransferDetail `json:"data"`
+	Code    string          `json:"code"`
+	Message string          `json:"message"`
 }

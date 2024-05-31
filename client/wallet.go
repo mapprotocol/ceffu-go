@@ -11,8 +11,9 @@ import (
 
 type Wallet interface {
 	Withdrawal(ctx context.Context, request *types.WithdrawalRequest) (*types.WithdrawalResponseData, error)
-	WithdrawalDetail(ctx context.Context, orderViewId string) (*types.Transaction, error)
-	Exchange(ctx context.Context, request *types.ExchangeRequest) (*types.ExchangeResponseData, error)
+	WithdrawalDetail(ctx context.Context, orderViewID string) (*types.Transaction, error)
+	TransferWithExchange(ctx context.Context, request *types.TransferWithExchangeRequest) (*types.Transfer, error)
+	TransferDetailWithExchange(ctx context.Context, orderViewID string, walletID int64) (*types.TransferDetail, error)
 }
 
 // Withdrawal This method enables the withdrawal of funds from the specified wallet to an external address
@@ -56,9 +57,9 @@ func (c *client) Withdrawal(ctx context.Context, request *types.WithdrawalReques
 // Amount field will be included fee if the fee paid in same coin symbol.
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471329
-func (c *client) WithdrawalDetail(ctx context.Context, orderViewId string) (*types.Transaction, error) {
+func (c *client) WithdrawalDetail(ctx context.Context, orderViewID string) (*types.Transaction, error) {
 	request := types.WithdrawalDetailRequest{
-		OrderViewID: orderViewId,
+		OrderViewID: orderViewID,
 		RequestID:   strconv.FormatInt(c.RequestID.Generate(), 10),
 		Timestamp:   time.Now().UnixMilli(),
 	}
@@ -84,30 +85,64 @@ func (c *client) WithdrawalDetail(ctx context.Context, orderViewId string) (*typ
 	return response.Data, nil
 }
 
-// Exchange This method allows to transfer assets from Ceffu Prime Wallet to a bound
+// TransferWithExchange This method allows to transfer assets from Ceffu Prime Wallet to a bound
 // Binance Account (To be bound in Web Portal [Wallets > Binance Transfer].
 //
 // Notes: Currently support from Ceffu to Exchange direction only.
 //
 // reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471337
-func (c *client) Exchange(ctx context.Context, request *types.ExchangeRequest) (*types.ExchangeResponseData, error) {
+func (c *client) TransferWithExchange(ctx context.Context, request *types.TransferWithExchangeRequest) (*types.Transfer, error) {
 	request.RequestID = c.RequestID.Generate()
 	request.Timestamp = time.Now().UnixMilli()
 
-	ret, err := c.Post(ctx, PathExchange, request)
+	ret, err := c.Post(ctx, PathTransferWithExchange, request)
 	if err != nil {
 		return nil, NewRequestError(
-			PathExchange,
+			PathTransferWithExchange,
 			WithError(err),
 		)
 	}
-	response := types.ExchangeResponse{}
+	response := types.TransferWithExchangeResponse{}
 	if err := json.Unmarshal(ret, &response); err != nil {
 		return nil, err
 	}
 	if response.Code != SuccessCode {
 		return nil, NewRequestError(
-			PathExchange,
+			PathTransferWithExchange,
+			WithCode(response.Code),
+			WithMessage(response.Message),
+		)
+	}
+	return response.Data, nil
+}
+
+// TransferDetailWithExchange This method allows to get transfer details with Exchange by orderViewId or requestId
+//
+// orderViewId or requestId shall be passed in Request Query.
+//
+// reference: https://apidoc.ceffu.io/apidoc/shared-c9ece2c6-3ab4-4667-bb7d-c527fb3dbf78/api-3471330
+func (c *client) TransferDetailWithExchange(ctx context.Context, orderViewID string, walletID int64) (*types.TransferDetail, error) {
+	request := types.TransferDetailWithExchangeRequest{
+		OrderViewID: orderViewID,
+		WalletID:    walletID,
+		RequestID:   strconv.FormatInt(c.RequestID.Generate(), 10),
+		Timestamp:   time.Now().UnixMilli(),
+	}
+
+	ret, err := c.Post(ctx, PathTransferDetailWithExchange, request)
+	if err != nil {
+		return nil, NewRequestError(
+			PathTransferDetailWithExchange,
+			WithError(err),
+		)
+	}
+	response := types.TransferDetailWithExchangeResponse{}
+	if err := json.Unmarshal(ret, &response); err != nil {
+		return nil, err
+	}
+	if response.Code != SuccessCode {
+		return nil, NewRequestError(
+			PathTransferDetailWithExchange,
 			WithCode(response.Code),
 			WithMessage(response.Message),
 		)
