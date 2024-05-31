@@ -97,11 +97,11 @@ type TransferWithExchangeResponse struct {
 type TransferDetail struct {
 	Amount         string `json:"amount"`
 	CoinSymbol     string `json:"coinSymbol"`
-	Direction      int    `json:"direction"`
-	ExchangeCode   int    `json:"exchangeCode"`
+	Direction      int32  `json:"direction"`
+	ExchangeCode   int32  `json:"exchangeCode"`
 	ExchangeUserID string `json:"exchangeUserId"`
 	OrderViewID    string `json:"orderViewId"`
-	Status         int    `json:"status"`
+	Status         int32  `json:"status"`
 	WalletID       int64  `json:"walletId"`
 	CreateTime     int64  `json:"createTime"` // TODO field is exist in response, need to check
 	RequestId      string `json:"requestId"`  // TODO field is exist in response, need to check
